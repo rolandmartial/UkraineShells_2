@@ -16,12 +16,12 @@ st.set_page_config(page_title="Sales Dashboard", page_icon=":bar_chart:", layout
 @st.cache_data
 def get_data_from_excel():
     df = pd.read_excel(
-        io="supermarkt_sales.xlsx",
+        io="ukraine_shells.xlsx",
         engine="openpyxl",
         sheet_name="Sales",
         skiprows=3,
-        usecols="B:R",
-        nrows=1000,
+        usecols="B:H",
+        nrows=10,
     )
     # Add 'hour' column to dataframe
     df["hour"] = pd.to_datetime(df["Time"], format="%H:%M:%S").dt.hour
@@ -31,26 +31,20 @@ df = get_data_from_excel()
 
 # ---- SIDEBAR ----
 st.sidebar.header("Please Filter Here:")
-city = st.sidebar.multiselect(
-    "Select the City:",
-    options=df["City"].unique(),
-    default=df["City"].unique()
+manufacturer = st.sidebar.multiselect(
+    "Select the Manufacturer:",
+    options=df["Manufacturer"].unique(),
+    default=df["Manufacturer"].unique()
 )
 
-customer_type = st.sidebar.multiselect(
-    "Select the Customer Type:",
-    options=df["Customer_type"].unique(),
-    default=df["Customer_type"].unique(),
-)
-
-gender = st.sidebar.multiselect(
-    "Select the Gender:",
-    options=df["Gender"].unique(),
-    default=df["Gender"].unique()
+shell = st.sidebar.multiselect(
+    "Select the Shell Type:",
+    options=df["Shell"].unique(),
+    default=df["Shell"].unique(),
 )
 
 df_selection = df.query(
-    "City == @city & Customer_type ==@customer_type & Gender == @gender"
+    "Manufacturer == @manufacturer"
 )
 
 # Check if the dataframe is empty:
@@ -59,64 +53,47 @@ if df_selection.empty:
     st.stop() # This will halt the app from further execution.
 
 # ---- MAINPAGE ----
-st.title(":bar_chart: Sales Dashboard")
+st.title(":bar_chart: Artillery shells production dashboard")
 st.markdown("##")
 
 # TOP KPI's
-total_sales = int(df_selection["Total"].sum())
-average_rating = round(df_selection["Rating"].mean(), 1)
-star_rating = ":star:" * int(round(average_rating, 0))
-average_sale_by_transaction = round(df_selection["Total"].mean(), 2)
+total_production22 = int(df_selection["Pre-invasion yearly production"].sum())
+total_production23 = int(df_selection["2023 yearly production"].sum())
+total_production24 = int(df_selection["2024 yearly production"].sum())
 
 left_column, middle_column, right_column = st.columns(3)
 with left_column:
-    st.subheader("Total Sales:")
+    st.subheader("Pre-invasion production:")
     st.subheader(f"US $ {total_sales:,}")
 with middle_column:
-    st.subheader("Average Rating:")
+    st.subheader("2023 yearly production:")
     st.subheader(f"{average_rating} {star_rating}")
 with right_column:
-    st.subheader("Average Sales Per Transaction:")
+    st.subheader("2024 announced production:")
     st.subheader(f"US $ {average_sale_by_transaction}")
 
 st.markdown("""---""")
 
 # SALES BY PRODUCT LINE [BAR CHART]
-sales_by_product_line = df_selection.groupby(by=["Product line"])[["Total"]].sum().sort_values(by="Total")
-fig_product_sales = px.bar(
-    sales_by_product_line,
+total_production23 = df_selection.groupby(by=["Product line"])[["Total"]].sum().sort_values(by="Total")
+fig_production23 = px.bar(
+    total_production23,
     x="Total",
-    y=sales_by_product_line.index,
+    y=total_production23.index,
     orientation="h",
-    title="<b>Sales by Product Line</b>",
-    color_discrete_sequence=["#0083B8"] * len(sales_by_product_line),
+    title="<b>Current production by manufacturer</b>",
+    color_discrete_sequence=["#0083B8"] * len(total_production23),
     template="plotly_white",
 )
-fig_product_sales.update_layout(
+fig_production23.update_layout(
     plot_bgcolor="rgba(0,0,0,0)",
     xaxis=(dict(showgrid=False))
 )
 
-# SALES BY HOUR [BAR CHART]
-sales_by_hour = df_selection.groupby(by=["hour"])[["Total"]].sum()
-fig_hourly_sales = px.bar(
-    sales_by_hour,
-    x=sales_by_hour.index,
-    y="Total",
-    title="<b>Sales by hour</b>",
-    color_discrete_sequence=["#0083B8"] * len(sales_by_hour),
-    template="plotly_white",
-)
-fig_hourly_sales.update_layout(
-    xaxis=dict(tickmode="linear"),
-    plot_bgcolor="rgba(0,0,0,0)",
-    yaxis=(dict(showgrid=False)),
-)
 
 
 left_column, right_column = st.columns(2)
-left_column.plotly_chart(fig_hourly_sales, use_container_width=True)
-right_column.plotly_chart(fig_product_sales, use_container_width=True)
+right_column.plotly_chart(fig_production23, use_container_width=True)
 
 
 # ---- HIDE STREAMLIT STYLE ----
